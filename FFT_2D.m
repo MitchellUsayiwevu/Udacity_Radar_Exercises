@@ -22,10 +22,10 @@ X = S + 2*randn(size(t));
 % the frequency components by looking at the signal X(t).
 
 figure(1);
-tiledlayout(1,2)
+
 
 % left plot
-nexttile
+subplot(1,2,1)
 plot(1000*t(1:50), X(1:50))
 title('Signal corrupted with Zero-Mean Random Noise')
 xlabel('t (milliseconds)')
@@ -48,7 +48,7 @@ P1 = P2(1:L/2+1);
 
 f = Fs*(0:(L/2))/L;
 
-nexttile
+subplot(1,2,2)
 plot(f,P1)
 title('Single-Sided Amplitude Spectrum of X(t)')
 xlabel('f (Hz)')
@@ -72,9 +72,8 @@ N = length(X)/30;
 X_2d = reshape(X, [M, N]);
 
 figure(2);
-tiledlayout(1,2)
 
-nexttile
+subplot(1,2,1);
 imagesc(X_2d)
 
 
@@ -84,6 +83,8 @@ Y_2d = fft2(X_2d,M,N);
 % Shift the zero-frequency component to the center of the output and plot the resulting
 % matrix, which is the same size as X_2d.
 signal_fft = fftshift(Y_2d);
+signal_fft = abs(signal_fft);
 
-nexttile
+subplot(1,2,2);
+imagesc(signal_fft);
 % TODO: plot here
