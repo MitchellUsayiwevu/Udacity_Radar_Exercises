@@ -2,7 +2,8 @@
 
 % Close and delete all currently open figures
 close all;
-
+clear all;
+clc;
 % Generate Noisy Signal
 
 % Specify the parameters of a signal with a sampling frequency of 1 kHz
@@ -32,51 +33,47 @@ X_cfar([100 ,200, 300, 700])=[16 18 27 22];
 
 % plot the output
 figure(1);
-tiledlayout(2,1)
-nexttile
+subplot(2,1,1);
+
 plot(X_cfar)
 
 % Apply CFAR to detect the targets by filtering the noise.
 
 % TODO: Define the number of Training Cells
-T = 6;
+T = 12;
 % TODO: Define the number of Guard Cells
-G = 2;
+G = 4;
 % TODO: Define Offset (Adding room above noise threshold for the desired SNR)
-offset = 0.1;
+offset = 3;
 
 % Initialize vector to hold threshold values
-threshold_cfar = zeros(Ns-(G+T+1),1);
+%threshold_cfar = zeros(Ns-(G+T+1),1);
+threshold_cfar = zeros(Ns,1);
 
 % Initialize Vector to hold final signal after thresholding
-signal_cfar = zeros(Ns-(G+T+1),1);
+%signal_cfar = zeros(Ns-(G+T+1),1);
+signal_cfar = zeros(Ns,1);
 
-% Slide window across the signal length
-for i = 1:(Ns-(G+T+1))
+% Slide window across the signal length with leading and lagging training cells
 
-    % TODO: Determine the noise threshold by measuring it within
-    % the training cells
-    noise_level =
-    % TODO: scale the noise_level by appropriate offset value and take
-    % average over T training cells
-    threshold =
-    % Add threshold value to the threshold_cfar vector
+for i = (G+T+1):(Ns-(G+T+1))
+ 
+    noise_level = mean( [X_cfar(i-(G+T):i-(G+1)), X_cfar(i+(G+1):i+(G+T))] );
+    threshold = noise_level* offset;
     threshold_cfar(i) = threshold;
-    % TODO: Measure the signal within the CUT
-    signal =
-    % add signal value to the signal_cfar vector
-    signal_cfar(i) = signal;
+    signal_cfar(i) = X_cfar(i);
+    
 end
 
+
 % plot the filtered signal
+
 plot(signal_cfar);
 legend('Signal')
-
-% plot original sig, threshold and filtered signal within the same figure.
-nexttile
+subplot(2,1,2)
 plot(X_cfar);
 hold on
-plot(circshift(threshold_cfar,G),'r--','LineWidth',2)
+plot(threshold_cfar,'r--','LineWidth',2)
 hold on
-plot (circshift(signal_cfar,(T+G)),'g--','LineWidth',2);
+plot (signal_cfar,'g--','LineWidth',2);
 legend('Signal','CFAR Threshold','detection')
