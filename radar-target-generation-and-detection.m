@@ -2,7 +2,7 @@ close all;
 clear all;
 clc;
 
-%% Radar Specifications 
+%% Radar Specifications
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Frequency of operation = 77GHz
 % Max Range = 200m
@@ -19,7 +19,7 @@ c = 3e8;
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
- 
+
 target_pos = 50;
 target_vel = 23;
 
@@ -32,15 +32,15 @@ B = c/(2*d_res);
 % chirp using the requirements above.
 T_chirp = (5.5*2*d_max)/c;
 S = B/T_chirp;
-%Operating carrier frequency of Radar 
+%Operating carrier frequency of Radar
 fc= 77e9;             %carrier freq
 
-                                                          
+
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
-%for Doppler Estimation. 
+%for Doppler Estimation.
 Nd=128;                   % #of doppler cells OR #of sent periods % number of chirps
 
-%The number of samples on each chirp. 
+%The number of samples on each chirp.
 Nr=1024;                  %for length of time OR # of range cells
 
 % Timestamp for running the displacement scenario for every sample on each
@@ -60,11 +60,11 @@ delta_t = t(2)-t(1);
 
 
 %% Signal generation and Moving Target simulation
-% Running the radar scenario over the time. 
+% Running the radar scenario over the time.
 
-for i=1:length(t)         
-    
-    
+for i=1:length(t)
+
+
     % *%TODO* :
     %For each time stamp update the Range of the Target for constant velocity.
    if i>1
@@ -78,13 +78,13 @@ for i=1:length(t)
     t_d(i) =  (2*r_t(i))/c;
     Tx(i) = cos(2*pi*((fc*i)+((S*i^2)/2)));
     Rx (i)  = cos(2*pi*((fc*(i-t_d(i)))+((S*(i-t_d(i))^2)/2)));
-    
+
     % *%TODO* :
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
     Mix(i) = Tx(i).*Rx(i);
-    
+
 end
 
 %% RANGE MEASUREMENT
@@ -110,9 +110,9 @@ P1 = signal_fft_abs(1:Nr/2 +1);
 
 %plotting the range
  % *%TODO* :
- % plot FFT output 
+ % plot FFT output
 
-figure() 
+figure()
 plot(0:(Nr/2), P1)
 xlabel('Range bin')
 ylabel('|Amplitude|')
@@ -177,7 +177,7 @@ offset = 10;
 
 
 % *%TODO* :
-%Select the number of Guard Cells in both dimensions around the Cell under 
+%Select the number of Guard Cells in both dimensions around the Cell under
 %test (CUT) for accurate estimation
 
 % *%TODO* :
@@ -200,64 +200,58 @@ threshhold_val = zeros(1,1);
 %signal under CUT with this threshold. If the CUT level > threshold assign
 %it a value of 1, else equate it to 0.
 
-Threshhold_block = zeros(Nr/2,Nd);
-training_cells_total =  (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
-
-for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
-  for j = (Td+Gd+1) : (Nd - (Td+Gd+1))
-    
-   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
-   % CFAR
-
-          
-     % loop to get to each of the training cells.
-     % indeces are relative to the CUT index, i and j   
-    noise_level_sum = 0;  
-     for k = (i -(Tr+Gr)) : (i + (Tr+Gr))
-       
-       for l = (j - (Td+Gd)) : (j + (Td+Gd))
-         
-         if k >= (i-Gr) && k <= (i + Gr) && l >=(j-Gd) && l <= (j + Gd)
-           continue;
-         else
-           noise_level = RDM(k,l);
-%           noise_level_pow = db2pow(noise_level);
-           noise_level_pow = 10.^(noise_level / 10);
-           noise_level_sum = noise_level_sum + noise_level_pow;
-         end
-         
-       end
-     end
-     
-     noise_level_avg = noise_level_sum/ training_cells_total;
-%     noise_level_avg_db =  pow2db(noise_level_avg);  
-     noise_level_avg_db = 10 * log10(noise_level_avg);  
-     threshhold_val = noise_level_avg_db + offset;
-     
-     if RDM(i,j)>threshhold_val
-       Threshhold_block(i,j) = 1;
-     else
-       Threshhold_block(i,j) = 0;
-     end
-     
-    
-  end
-end
+##Threshhold_block = zeros(Nr/2,Nd);
+##training_cells_total =  (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
+##
+##for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
+##  for j = (Td+Gd+1) : (Nd - (Td+Gd+1))
+##
+##   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+##   % CFAR
+##
+##
+##     % loop to get to each of the training cells.
+##     % indeces are relative to the CUT index, i and j
+##    noise_level_sum = 0;
+##     for k = (i -(Tr+Gr)) : (i + (Tr+Gr))
+##
+##       for l = (j - (Td+Gd)) : (j + (Td+Gd))
+##
+##         if k >= (i-Gr) && k <= (i + Gr) && l >=(j-Gd) && l <= (j + Gd)
+##           continue;
+##         else
+##           noise_level = RDM(k,l);
+##%           noise_level_pow = db2pow(noise_level);
+##           noise_level_pow = 10.^(noise_level / 10);
+##           noise_level_sum = noise_level_sum + noise_level_pow;
+##         end
+##
+##       end
+##     end
+##
+##     noise_level_avg = noise_level_sum/ training_cells_total;
+##%     noise_level_avg_db =  pow2db(noise_level_avg);
+##     noise_level_avg_db = 10 * log10(noise_level_avg);
+##     threshhold_val = noise_level_avg_db + offset;
+##
+##     if RDM(i,j)>threshhold_val
+##       Threshhold_block(i,j) = 1;
+##     else
+##       Threshhold_block(i,j) = 0;
+##     end
+##
+##
+##  end
+##end
 
 
 
 
 % *%TODO* :
-% The process above will generate a thresholded block, which is smaller 
+% The process above will generate a thresholded block, which is smaller
 %than the Range Doppler Map as the CUT cannot be located at the edges of
 %matrix. Hence,few cells will not be thresholded. To keep the map size same
-% set those values to 0. 
- 
-
-
-
-
-
+% set those values to 0.
 
 
 
@@ -267,10 +261,28 @@ end
 
 %Threshhold_block(Threshhold_block ~= 0 & Threshhold_block ~= 1) = 0;
 
+##figure;
+##surf(doppler_axis,range_axis, Threshhold_block);
+##colorbar;
+
+
+mask = ones(2 * Tr + 2 * Gr + 1, 2 * Td + 2 * Gd + 1);
+centre_coord = [Tr + Gr + 1, Td + Gd + 1];
+mask(centre_coord(1) - Gr : centre_coord(1) + Gr, centre_coord(2) - Gd : centre_coord(2) + Gd) = 0;
+mask = mask / sum(mask(:));
+% Convolve, then convert back to dB to add the offset
+% The convolution defines the threshold
+threshold = conv2(db2pow(RDM), mask, 'same');
+threshold = pow2db(threshold) + offset;
+% Any values less than the threshold are 0, else 1
+RDM(RDM < threshold) = 0;
+RDM(RDM >= threshold) = 1;
+
 figure;
-surf(doppler_axis,range_axis, Threshhold_block);
+surf(doppler_axis,range_axis, RDM);
 colorbar;
 
+%%
 
- 
- 
+
+
