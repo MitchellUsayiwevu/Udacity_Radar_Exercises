@@ -1,9 +1,10 @@
-% Implement 1D CFAR using lagging cells on the given noise and target scenario.
+% Implement 1D CFAR using leading and lagging cells on the given noise and target scenario.
 
 % Close and delete all currently open figures
 close all;
 clear all;
 clc;
+
 % Generate Noisy Signal
 
 % Specify the parameters of a signal with a sampling frequency of 1 kHz

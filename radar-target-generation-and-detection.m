@@ -1,4 +1,5 @@
-clear all
+close all;
+clear all;
 clc;
 
 %% Radar Specifications 
@@ -8,23 +9,29 @@ clc;
 % Range Resolution = 1 m
 % Max Velocity = 100 m/s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
+f = 77*10^9;
+d_max = 200;
+d_res = 1;
+v_max = 100;
+c = 3e8;
 
-%speed of light = 3e8
 %% User Defined Range and Velocity of target
 % *%TODO* :
 % define the target's initial position and velocity. Note : Velocity
 % remains contant
  
-
+target_pos = 50;
+target_vel = 23;
 
 %% FMCW Waveform Generation
 
 % *%TODO* :
 %Design the FMCW waveform by giving the specs of each of its parameters.
 % Calculate the Bandwidth (B), Chirp Time (Tchirp) and Slope (slope) of the FMCW
+B = c/(2*d_res);
 % chirp using the requirements above.
-
-
+T_chirp = (5.5*2*d_max)/c;
+S = B/T_chirp;
 %Operating carrier frequency of Radar 
 fc= 77e9;             %carrier freq
 
@@ -38,7 +45,7 @@ Nr=1024;                  %for length of time OR # of range cells
 
 % Timestamp for running the displacement scenario for every sample on each
 % chirp
-t=linspace(0,Nd*Tchirp,Nr*Nd); %total time for samples
+t=linspace(0,Nd*T_chirp,Nr*Nd); %total time for samples
 
 
 %Creating the vectors for Tx, Rx and Mix based on the total samples input.
@@ -48,7 +55,8 @@ Mix = zeros(1,length(t)); %beat signal
 
 %Similar vectors for range_covered and time delay.
 r_t=zeros(1,length(t));
-td=zeros(1,length(t));
+t_d=zeros(1,length(t));
+delta_t = t(2)-t(1);
 
 
 %% Signal generation and Moving Target simulation
@@ -58,19 +66,24 @@ for i=1:length(t)
     
     
     % *%TODO* :
-    %For each time stamp update the Range of the Target for constant velocity. 
-    
+    %For each time stamp update the Range of the Target for constant velocity.
+   if i>1
+     r_t(i) =  r_t(i-1) + (delta_t*target_vel);
+   else
+      r_t(i) =  target_pos + (delta_t*target_vel);
+   end
     % *%TODO* :
     %For each time sample we need update the transmitted and
-    %received signal. 
-    Tx(i) = 
-    Rx (i)  =
+    %received signal.
+    t_d(i) =  (2*r_t(i))/c;
+    Tx(i) = cos(2*pi*((fc*i)+((S*i^2)/2)));
+    Rx (i)  = cos(2*pi*((fc*(i-t_d(i)))+((S*(i-t_d(i))^2)/2)));
     
     % *%TODO* :
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
-    Mix(i) = 
+    Mix(i) = Tx(i).*Rx(i);
     
 end
 
@@ -80,30 +93,31 @@ end
  % *%TODO* :
 %reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
 %Range and Doppler FFT respectively.
-
+Mix1d = reshape(Mix, [Nr, Nd]);
  % *%TODO* :
 %run the FFT on the beat signal along the range bins dimension (Nr) and
 %normalize.
 
+signal_fft = fft(Mix1d,Nr,1);
  % *%TODO* :
 % Take the absolute value of FFT output
+signal_fft_abs = abs(signal_fft/Nr);
 
  % *%TODO* :
 % Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
 % Hence we throw out half of the samples.
-
+P1 = signal_fft_abs(1:Nr/2 +1);
 
 %plotting the range
-figure ('Name','Range from First FFT')
-subplot(2,1,1)
-
  % *%TODO* :
  % plot FFT output 
 
- 
-axis ([0 200 0 1]);
-
-
+figure() 
+plot(0:(Nr/2), P1)
+xlabel('Range bin')
+ylabel('|Amplitude|')
+title('Range FFT Output')
+grid on
 
 %% RANGE DOPPLER RESPONSE
 % The 2D FFT implementation is already provided here. This will run a 2DFFT
@@ -140,6 +154,11 @@ figure,surf(doppler_axis,range_axis,RDM);
 
 % *%TODO* :
 %Select the number of Training Cells in both the dimensions.
+Tr = 8;
+Td = 4;
+Gr = 4;
+Gd = 2;
+CUT = 1;
 
 % *%TODO* :
 %Select the number of Guard Cells in both dimensions around the Cell under 
@@ -147,11 +166,12 @@ figure,surf(doppler_axis,range_axis,RDM);
 
 % *%TODO* :
 % offset the threshold by SNR value in dB
+offset = 15;
 
 % *%TODO* :
 %Create a vector to store noise_level for each iteration on training cells
 noise_level = zeros(1,1);
-
+threshhold_val = zeros(1,1);
 
 % *%TODO* :
 %design a loop such that it slides the CUT across range doppler map by
@@ -164,10 +184,49 @@ noise_level = zeros(1,1);
 %signal under CUT with this threshold. If the CUT level > threshold assign
 %it a value of 1, else equate it to 0.
 
+Threshhold_block = zeros(Nr/2,Nd);
+training_cells_total =  (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
 
+for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
+  for j = (Td+Gd+1) : (Nd - (Td+Gd+1))
+    
    % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
    % CFAR
 
+          
+     % loop to get to each of the training cells.
+     % indeces are relative to the CUT index, i and j   
+    noise_level_sum = 0;  
+     for k = (i -(Tr+Gr)) : (i + (Tr+Gr))
+       
+       for l = (j - (Td+Gd)) : (j + (Td+Gd))
+         
+         if k >= (i-Gr) && k <= (i + Gr) && l >=(j-Gd) && l <= (j + Gd)
+           continue;
+         else
+           noise_level = RDM(k,l);
+%           noise_level_pow = db2pow(noise_level);
+           noise_level_pow = 10.^(noise_level / 10);
+           noise_level_sum = noise_level_sum + noise_level_pow;
+         end
+         
+       end
+     end
+     
+     noise_level_avg = noise_level_sum/ training_cells_total;
+%     noise_level_avg_db =  pow2db(noise_level_avg);  
+     noise_level_avg_db = 10 * log10(noise_level_avg);  
+     threshhold_val = noise_level_avg_db * offset;
+     
+     if RDM(i,j)>threshhold_val
+       Threshhold_block(i,j) = 1;
+     else
+       Threshhold_block(i,j) = 0;
+     end
+     
+    
+  end
+end
 
 
 
@@ -189,7 +248,8 @@ noise_level = zeros(1,1);
 % *%TODO* :
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
-figure,surf(doppler_axis,range_axis,'replace this with output');
+figure;
+surf(doppler_axis,range_axis, Threshhold_block);
 colorbar;
 
 
