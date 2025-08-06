@@ -166,7 +166,7 @@ CUT = 1;
 
 % *%TODO* :
 % offset the threshold by SNR value in dB
-offset = 15;
+offset = 6;
 
 % *%TODO* :
 %Create a vector to store noise_level for each iteration on training cells
@@ -216,7 +216,7 @@ for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
      noise_level_avg = noise_level_sum/ training_cells_total;
 %     noise_level_avg_db =  pow2db(noise_level_avg);  
      noise_level_avg_db = 10 * log10(noise_level_avg);  
-     threshhold_val = noise_level_avg_db * offset;
+     threshhold_val = noise_level_avg_db + offset;
      
      if RDM(i,j)>threshhold_val
        Threshhold_block(i,j) = 1;
