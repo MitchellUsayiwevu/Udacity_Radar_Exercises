@@ -168,10 +168,19 @@ figure,surf(doppler_axis,range_axis,RDM);
 %CUT = 1;
 %offset = 3;
 
-Tr = 12;
-Td = 12;
-Gr = 4;
-Gd = 4;
+
+% decent
+%Tr = 12;
+%Td = 12;
+%Gr = 4;
+%Gd = 4;
+%CUT = 1;
+%offset = 10;
+
+Tr = 24;
+Td = 24;
+Gr = 8;
+Gd = 8;
 CUT = 1;
 offset = 10;
 
@@ -265,7 +274,7 @@ end
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
 
-%Threshhold_block(Threshhold_block ~= 0 & Threshhold_block ~= 1) = 0;
+Threshhold_block(Threshhold_block ~= 0 & Threshhold_block ~= 1) = 0;
 
 figure;
 surf(doppler_axis,range_axis, Threshhold_block);
