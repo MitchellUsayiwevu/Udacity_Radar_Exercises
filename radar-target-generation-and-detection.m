@@ -262,8 +262,9 @@ surf(doppler_axis,range_axis, Threshhold_block);
 colorbar;
 
 %%%
+
 ##This section uses code from mentor who helped me debug my code using convolution
-## Helped with trying out different parameter combinations quickly as this has a faster execution time compared to the code I wrote with nexted for loops
+## Helped with trying out different parameter combinations quickly as this has a faster execution time compared to the code I wrote with nested for loops
 
 %pow2db = @(x) 10*log10(x);
 %db2pow = @(x) 10.^(x / 10);
