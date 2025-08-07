@@ -154,19 +154,13 @@ figure,surf(doppler_axis,range_axis,RDM);
 
 % *%TODO* :
 %Select the number of Training Cells in both the dimensions.
-%Tr = 12;
-%Td = 8;
-%Gr = 8;
-%Gd = 4;
-%CUT = 1;
-%offset = 10;
 
-%Tr = 8;
-%Td = 4;
-%Gr = 4;
-%Gd = 2;
-%CUT = 1;
-%offset = 3;
+Tr = 8;
+Td = 4;
+Gr = 4;
+Gd = 2;
+CUT = 1;
+offset = 13;
 
 
 % decent
@@ -177,12 +171,6 @@ figure,surf(doppler_axis,range_axis,RDM);
 %CUT = 1;
 %offset = 10;
 
-Tr = 24;
-Td = 24;
-Gr = 8;
-Gd = 8;
-CUT = 1;
-offset = 10;
 
 
 % *%TODO* :
@@ -209,49 +197,49 @@ threshhold_val = zeros(1,1);
 %signal under CUT with this threshold. If the CUT level > threshold assign
 %it a value of 1, else equate it to 0.
 
-##Threshhold_block = zeros(Nr/2,Nd);
-##training_cells_total =  (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
-##
-##for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
-##  for j = (Td+Gd+1) : (Nd - (Td+Gd+1))
-##
-##   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
-##   % CFAR
-##
-##
-##     % loop to get to each of the training cells.
-##     % indeces are relative to the CUT index, i and j
-##    noise_level_sum = 0;
-##     for k = (i -(Tr+Gr)) : (i + (Tr+Gr))
-##
-##       for l = (j - (Td+Gd)) : (j + (Td+Gd))
-##
-##         if k >= (i-Gr) && k <= (i + Gr) && l >=(j-Gd) && l <= (j + Gd)
-##           continue;
-##         else
-##           noise_level = RDM(k,l);
-##%           noise_level_pow = db2pow(noise_level);
-##           noise_level_pow = 10.^(noise_level / 10);
-##           noise_level_sum = noise_level_sum + noise_level_pow;
-##         end
-##
-##       end
-##     end
-##
-##     noise_level_avg = noise_level_sum/ training_cells_total;
-##%     noise_level_avg_db =  pow2db(noise_level_avg);
-##     noise_level_avg_db = 10 * log10(noise_level_avg);
-##     threshhold_val = noise_level_avg_db + offset;
-##
-##     if RDM(i,j)>threshhold_val
-##       Threshhold_block(i,j) = 1;
-##     else
-##       Threshhold_block(i,j) = 0;
-##     end
-##
-##
-##  end
-##end
+Threshhold_block = zeros(Nr/2,Nd);
+training_cells_total =  (2*Tr+2*Gr+1)*(2*Td+2*Gd+1) - (2*Gr+1)*(2*Gd+1);
+
+for i = (Tr+Gr+1) : ((Nr/2) - (Tr+Gr+1))
+  for j = (Td+Gd+1) : (Nd - (Td+Gd+1))
+
+   % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+   % CFAR
+
+
+     % loop to get to each of the training cells.
+     % indeces are relative to the CUT index, i and j
+    noise_level_sum = 0;
+     for k = (i -(Tr+Gr)) : (i + (Tr+Gr))
+
+       for l = (j - (Td+Gd)) : (j + (Td+Gd))
+
+         if k >= (i-Gr) && k <= (i + Gr) && l >=(j-Gd) && l <= (j + Gd)
+           continue;
+         else
+           noise_level = RDM(k,l);
+%           noise_level_pow = db2pow(noise_level);
+           noise_level_pow = 10.^(noise_level / 10);
+           noise_level_sum = noise_level_sum + noise_level_pow;
+         end
+
+       end
+     end
+
+    noise_level_avg = noise_level_sum/ training_cells_total;
+%     noise_level_avg_db =  pow2db(noise_level_avg);
+     noise_level_avg_db = 10 * log10(noise_level_avg);
+     threshhold_val = noise_level_avg_db + offset;
+
+     if RDM(i,j)>threshhold_val
+       Threshhold_block(i,j) = 1;
+    else
+      Threshhold_block(i,j) = 0;
+    end
+
+
+  end
+end
 
 
 
@@ -268,28 +256,32 @@ threshhold_val = zeros(1,1);
 %display the CFAR output using the Surf function like we did for Range
 %Doppler Response output.
 
-Threshhold_block(Threshhold_block ~= 0 & Threshhold_block ~= 1) = 0;
-
-##figure;
-##surf(doppler_axis,range_axis, Threshhold_block);
-##colorbar;
-
-
-mask = ones(2 * Tr + 2 * Gr + 1, 2 * Td + 2 * Gd + 1);
-centre_coord = [Tr + Gr + 1, Td + Gd + 1];
-mask(centre_coord(1) - Gr : centre_coord(1) + Gr, centre_coord(2) - Gd : centre_coord(2) + Gd) = 0;
-mask = mask / sum(mask(:));
-% Convolve, then convert back to dB to add the offset
-% The convolution defines the threshold
-threshold = conv2(db2pow(RDM), mask, 'same');
-threshold = pow2db(threshold) + offset;
-% Any values less than the threshold are 0, else 1
-RDM(RDM < threshold) = 0;
-RDM(RDM >= threshold) = 1;
 
 figure;
-surf(doppler_axis,range_axis, RDM);
+surf(doppler_axis,range_axis, Threshhold_block);
 colorbar;
+
+%%%
+##This section uses code from mentor who helped me debug my code using convolution
+## Helped with trying out different parameter combinations quickly as this has a faster execution time compared to the code I wrote with nexted for loops
+
+%pow2db = @(x) 10*log10(x);
+%db2pow = @(x) 10.^(x / 10);
+%mask = ones(2 * Tr + 2 * Gr + 1, 2 * Td + 2 * Gd + 1);
+%centre_coord = [Tr + Gr + 1, Td + Gd + 1];
+%mask(centre_coord(1) - Gr : centre_coord(1) + Gr, centre_coord(2) - Gd : centre_coord(2) + Gd) = 0;
+%mask = mask / sum(mask(:));
+%% Convolve, then convert back to dB to add the offset
+%% The convolution defines the threshold
+%threshold = conv2(db2pow(RDM), mask, 'same');
+%threshold = pow2db(threshold) + offset;
+%% Any values less than the threshold are 0, else 1
+%RDM(RDM < threshold) = 0;
+%RDM(RDM >= threshold) = 1;
+%
+%figure;
+%surf(doppler_axis,range_axis, RDM);
+%colorbar;
 
 %%
 
