@@ -31,3 +31,11 @@ it a value of 1, else equate it to 0
 * Apply CFAR thresholding only for cells where full training and guard windows exist.
 * Leave edge cells (those near borders) as zeros.
 * After CFAR processing, explicitly set edge regions to 0 to suppress undefined areas.
+
+## Code with faster execution time -  Using convolution
+
+* Code provided by Udacity mentor using convolution has a faster execution time
+* Uncomment lines 268 to 284 and comment out 200 to 262. The lines of code do exactly the same thing
+* Convolution helps with iteration process to find the correct parameters.You can explore parameter combinations quickly as it has a faster execution time compared to the code I wrote with nested for loops
+
+<img src="one_peak_output.jpg" />
